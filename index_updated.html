@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tanvi & Robbie Seating Chart</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background:#faf7f2;
+    color:#4b3b4d;
+    padding:20px;
+}
+.container {
+    max-width:900px;
+    margin:auto;
+    background:white;
+    border-radius:20px;
+    padding:35px;
+    box-shadow:0 4px 15px rgba(0,0,0,.1);
+}
+input {
+    width:85%;
+    padding:14px;
+    font-size:18px;
+    border-radius:10px;
+    border:1px solid #ccc;
+}
+.list {
+    max-height:500px;
+    overflow:auto;
+    border:1px solid #ddd;
+    border-radius:10px;
+    padding:15px;
+    margin-top:20px;
+}
+.item {
+    padding:8px;
+    border-bottom:1px solid #eee;
+}
+.result {
+    margin-top:20px;
+    font-size:22px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Tanvi & Robbie</h1>
+<h3>Wedding Reception Seating Chart</h3>
+<p>Search by guest name or table number.</p>
+
+<input id="search" placeholder="Enter your name or table number">
+
+<div id="result" class="result"></div>
+
+<h3>Guest List</h3>
+<div id="list" class="list">Loading...</div>
+</div>
+
+<script>
+let guests = [];
+
+async function loadData() {
+    try {
+        const response = await fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vQgZTrigRqTNXJkP_B65F9tLm9UcAI68Clpng1Q1LXtbBntx79MYoLjXM0GAvthww/pub?output=csv&t=" + new Date().getTime());
+        const text = await response.text();
+
+        const rows = text.trim().split('\n').slice(1);
+
+        guests = rows.map(r => {
+            const cols = r.split(',');
+            return {
+                name: (cols[0] || '').replace(/"/g,'').trim(),
+                table: (cols[1] || '').replace(/"/g,'').trim()
+            };
+        }).filter(g => g.name);
+
+        renderList(guests);
+    } catch(err) {
+        document.getElementById('list').innerHTML =
+          'Unable to load guest list. Please refresh the page.';
+        console.error(err);
+    }
+}
+
+function renderList(list) {
+    document.getElementById("list").innerHTML =
+        list.sort((a,b)=>a.name.localeCompare(b.name))
+            .map(g => `<div class="item">${g.name} — ${g.table}</div>`)
+            .join('');
+}
+
+document.getElementById("search").addEventListener("input", function() {
+    const q = this.value.toLowerCase().trim();
+
+    if(!q) {
+        document.getElementById("result").innerHTML = "";
+        renderList(guests);
+        return;
+    }
+
+    const matches = guests.filter(g =>
+        g.name.toLowerCase().includes(q) ||
+        g.table.toLowerCase().includes(q) ||
+        g.table.toLowerCase().replace("table ","") === q
+    );
+
+    if(matches.length && (q.includes("table") || /^\d+$/.test(q))) {
+        document.getElementById("result").innerHTML =
+            `<b>${matches[0].table}</b><br><br>` +
+            matches.map(g => `✨ ${g.name}`).join("<br>");
+    } else {
+        document.getElementById("result").innerHTML =
+            matches.length
+                ? matches.map(g =>
+                    `✨ ${g.name}<br>${g.table}`
+                  ).join("<br><br>")
+                : "No guest found.";
+    }
+
+    renderList(matches);
+});
+
+loadData();
+</script>
+</body>
+</html>
