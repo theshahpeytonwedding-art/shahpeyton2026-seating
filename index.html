@@ -96,6 +96,8 @@ document.getElementById("search").addEventListener("input", function() {
 
     const matches = guests.filter(g =>
         g.name.toLowerCase().includes(q)
+        g.table.toLowerCase().includes(q) ||
+        g.table.replace("table ","").includes(q)
     );
 
     document.getElementById("result").innerHTML =
