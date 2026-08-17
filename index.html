@@ -134,11 +134,17 @@ document.getElementById('search').addEventListener('input', function(){
    return;
  }
 
- const matches=guests.filter(g=>
-   g.name.toLowerCase().includes(q) ||
-   g.table.toLowerCase().includes(q) ||
-   g.table.toLowerCase().replace('table ','')===q
- );
+ const tableQuery = q.replace(/^table\s*/i, '').trim();
+
+const matches = guests.filter(g => {
+    const tableNumber = g.table.toLowerCase().replace(/^table\s*/i, '').trim();
+
+    if (/^\d+$/.test(tableQuery)) {
+        return tableNumber === tableQuery;
+    }
+
+    return g.name.toLowerCase().includes(q);
+});
 
  if(matches.length && (q.includes('table') || /^\d+$/.test(q))){
    document.getElementById('result').innerHTML =
